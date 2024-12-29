@@ -29,7 +29,7 @@ def token_obrigatorio(f):
         return f(autor, *args, **kwargs)
     return decorated
 
-
+""" 
 @app.route('/login')
 def login():
     auth = request.authorization
@@ -39,10 +39,31 @@ def login():
     if not usuario:
         return make_response('Login inválido', 401, {'WWW-Authenticate': 'Basic realm="Login obrigatório"'})
     if auth.password == usuario.senha:
-        token = jwt.encode({'id_autor': usuario.id_autor, 'exp': datetime.now(timezone.utc
-        ) + timedelta(minutes=30)}, app.config['SECRET_KEY'])
+        token = jwt.encode({'id_autor': usuario.id_autor, 'exp': datetime.now(datetime.timezone.utc) + timedelta(minutes=30)}, app.config['SECRET_KEY'])
         return jsonify({'token': token})
     return make_response('Login inválido', 401, {'WWW-Authenticate': 'Basic realm="Login obrigatório"'})
+ """
+
+@app.route('/login')
+def login():
+    try:
+        auth = request.authorization
+        if not auth or not auth.username or not auth.password:
+            return make_response('Login inválido', 401, {'WWW-Authenticate': 'Basic realm="Login obrigatório"'})
+        
+        usuario = Autor.query.filter_by(nome=auth.username).first()
+        if not usuario:
+            return make_response('Login inválido', 401, {'WWW-Authenticate': 'Basic realm="Login obrigatório"'})
+        
+        if auth.password == usuario.senha:
+            token = jwt.encode({'id_autor': usuario.id_autor, 'exp': datetime.now(timezone.utc) + timedelta(minutes=30)
+            }, app.config['SECRET_KEY'])
+            return jsonify({'token': token})
+
+        return make_response('Login inválido', 401, {'WWW-Authenticate': 'Basic realm="Login obrigatório"'})
+    
+    except Exception as e:
+        return make_response(f'Erro interno: {str(e)}', 500)
 
 
 @app.route('/')
